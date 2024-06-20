@@ -8,11 +8,12 @@ from pydot import Dot, Node, Edge, graph_from_dot_file
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
-    SevpaTransition
+    SevpaTransition, RegisterAutomata, RegisterState
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Sevpa: 'vpa'}
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Sevpa: 'vpa', 
+                   RegisterAutomata: 'ra'}
 
 sevpa_transition_regex = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
 
@@ -44,6 +45,11 @@ def _get_node(state, automaton_type):
         return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'smm':
         return Node(state.state_id, label=_wrap_label(state.state_id))
+    if automaton_type == 'ra':
+        if state.is_accepting:
+            return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.availability}'), 
+                shape='doublecircle')
+        return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.availability}'))
     if automaton_type == 'vpa':
         if state.is_accepting:
             return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
@@ -57,6 +63,13 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
             if not display_same_state_trans and new_state.state_id == state.state_id:
                 continue
             graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(f'{i}')))
+    if automaton_type == 'ra':
+        for i in state.transitions.keys():
+            E, new_state = state.transitions[i]
+            if not display_same_state_trans and new_state.state_id == state.state_id:
+                continue
+            graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(
+                f'={i+1}, {E}' if i < state.availability else f'*, {E}')))
     if automaton_type == 'mealy':
         for i in state.transitions.keys():
             new_state = state.transitions[i]
@@ -252,7 +265,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)
-        if automaton_type == 'dfa' or automaton_type == 'vpa':
+        if automaton_type in ['dfa', 'vpa', 'ra']:
             if 'shape' in node.get_attributes().keys() and 'doublecircle' in node.get_attributes()['shape']:
                 node_label_dict[node_name].is_accepting = True
 

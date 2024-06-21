@@ -69,7 +69,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
             if not display_same_state_trans and new_state.state_id == state.state_id:
                 continue
             graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(
-                f'={i+1}, {E}' if i < state.availability else f'*, {E}')))
+                f'={i+1}, {[e+1 for e in E]}' if i < state.availability else f'*, {[e+1 for e in E]}')))
     if automaton_type == 'mealy':
         for i in state.transitions.keys():
             new_state = state.transitions[i]

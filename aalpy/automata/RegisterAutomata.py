@@ -32,8 +32,8 @@ class RegisterState(AutomatonState, Generic[InputType]):
 
     def get_new_memory(self, letter:InputType, E: list[int]):
         new_memory = self.memory + [letter]
-        for e in E:
-            del new_memory[e]
+        for i in range(len(E)):
+            del new_memory[E[i] - i]
         return new_memory
 
 class RegisterAutomata(Automaton[RegisterState[InputType]]):
